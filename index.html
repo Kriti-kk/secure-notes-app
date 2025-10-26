@@ -1,0 +1,1813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Notes - Privacy-Focused Note Taking</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+:root {
+  --color-white: rgba(255, 255, 255, 1);
+  --color-black: rgba(0, 0, 0, 1);
+  --color-cream-50: rgba(252, 252, 249, 1);
+  --color-cream-100: rgba(255, 255, 253, 1);
+  --color-gray-200: rgba(245, 245, 245, 1);
+  --color-gray-300: rgba(167, 169, 169, 1);
+  --color-gray-400: rgba(119, 124, 124, 1);
+  --color-slate-500: rgba(98, 108, 113, 1);
+  --color-brown-600: rgba(94, 82, 64, 1);
+  --color-charcoal-700: rgba(31, 33, 33, 1);
+  --color-charcoal-800: rgba(38, 40, 40, 1);
+  --color-slate-900: rgba(19, 52, 59, 1);
+  --color-teal-300: rgba(50, 184, 198, 1);
+  --color-teal-400: rgba(45, 166, 178, 1);
+  --color-teal-500: rgba(33, 128, 141, 1);
+  --color-teal-600: rgba(29, 116, 128, 1);
+  --color-teal-700: rgba(26, 104, 115, 1);
+  --color-teal-800: rgba(41, 150, 161, 1);
+  --color-red-400: rgba(255, 84, 89, 1);
+  --color-red-500: rgba(192, 21, 47, 1);
+  --color-orange-400: rgba(230, 129, 97, 1);
+  --color-orange-500: rgba(168, 75, 47, 1);
+
+  --color-brown-600-rgb: 94, 82, 64;
+  --color-teal-500-rgb: 33, 128, 141;
+  --color-slate-900-rgb: 19, 52, 59;
+  --color-slate-500-rgb: 98, 108, 113;
+  --color-red-500-rgb: 192, 21, 47;
+  --color-red-400-rgb: 255, 84, 89;
+  --color-orange-500-rgb: 168, 75, 47;
+  --color-orange-400-rgb: 230, 129, 97;
+
+  --color-bg-1: rgba(59, 130, 246, 0.08);
+  --color-bg-2: rgba(245, 158, 11, 0.08);
+  --color-bg-3: rgba(34, 197, 94, 0.08);
+  --color-bg-4: rgba(239, 68, 68, 0.08);
+
+  --color-background: var(--color-cream-50);
+  --color-surface: var(--color-cream-100);
+  --color-text: var(--color-slate-900);
+  --color-text-secondary: var(--color-slate-500);
+  --color-primary: var(--color-teal-500);
+  --color-primary-hover: var(--color-teal-600);
+  --color-primary-active: var(--color-teal-700);
+  --color-secondary: rgba(var(--color-brown-600-rgb), 0.12);
+  --color-secondary-hover: rgba(var(--color-brown-600-rgb), 0.2);
+  --color-border: rgba(var(--color-brown-600-rgb), 0.2);
+  --color-error: var(--color-red-500);
+  --color-success: var(--color-teal-500);
+  --color-warning: var(--color-orange-500);
+
+  --font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-size-xs: 11px;
+  --font-size-sm: 12px;
+  --font-size-base: 14px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-2xl: 20px;
+  --font-size-3xl: 24px;
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-10: 10px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --radius-base: 8px;
+  --radius-lg: 12px;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: var(--color-charcoal-700);
+    --color-surface: var(--color-charcoal-800);
+    --color-text: var(--color-gray-200);
+    --color-text-secondary: rgba(167, 169, 169, 0.7);
+    --color-primary: var(--color-teal-300);
+    --color-primary-hover: var(--color-teal-400);
+    --color-border: rgba(119, 124, 124, 0.3);
+    --color-secondary: rgba(119, 124, 124, 0.15);
+    --color-error: var(--color-red-400);
+    --color-success: var(--color-teal-300);
+  }
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  color: var(--color-text);
+  background-color: var(--color-background);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.auth-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-teal-700) 100%);
+}
+
+.auth-card {
+  background: var(--color-surface);
+  padding: var(--space-32);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 400px;
+  margin: var(--space-20);
+}
+
+.auth-card h1 {
+  font-size: var(--font-size-3xl);
+  margin-bottom: var(--space-8);
+  color: var(--color-text);
+}
+
+.auth-card p {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-24);
+}
+
+.form-group {
+  margin-bottom: var(--space-20);
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: var(--space-8);
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+}
+
+.form-group input {
+  width: 100%;
+  padding: var(--space-12);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-base);
+  font-size: var(--font-size-base);
+  background: var(--color-background);
+  color: var(--color-text);
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(var(--color-teal-500-rgb), 0.1);
+}
+
+.password-strength {
+  margin-top: var(--space-8);
+  height: 4px;
+  background: var(--color-secondary);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.password-strength-bar {
+  height: 100%;
+  transition: width 0.3s, background-color 0.3s;
+}
+
+.password-strength-bar.weak {
+  width: 33%;
+  background: var(--color-error);
+}
+
+.password-strength-bar.medium {
+  width: 66%;
+  background: var(--color-warning);
+}
+
+.password-strength-bar.strong {
+  width: 100%;
+  background: var(--color-success);
+}
+
+.btn {
+  padding: var(--space-12) var(--space-24);
+  border: none;
+  border-radius: var(--radius-base);
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--color-primary-hover);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: var(--color-error);
+  font-size: var(--font-size-sm);
+  margin-top: var(--space-8);
+}
+
+.app-container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.sidebar {
+  width: 320px;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: var(--space-16);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.app-title {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  margin-bottom: var(--space-12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.lock-btn {
+  background: none;
+  border: none;
+  padding: var(--space-8);
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-lg);
+  border-radius: var(--radius-base);
+}
+
+.lock-btn:hover {
+  background: var(--color-secondary);
+  color: var(--color-text);
+}
+
+.search-box {
+  position: relative;
+  margin-bottom: var(--space-12);
+}
+
+.search-box input {
+  width: 100%;
+  padding: var(--space-8) var(--space-32) var(--space-8) var(--space-12);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-base);
+  background: var(--color-background);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.search-icon, .clear-search {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.search-icon {
+  left: var(--space-12);
+}
+
+.clear-search {
+  right: var(--space-8);
+  background: none;
+  border: none;
+  padding: var(--space-4);
+  cursor: pointer;
+  border-radius: var(--radius-base);
+}
+
+.clear-search:hover {
+  background: var(--color-secondary);
+}
+
+.filter-buttons {
+  display: flex;
+  gap: var(--space-8);
+}
+
+.filter-btn {
+  flex: 1;
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-base);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-text);
+}
+
+.filter-btn.active {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.notes-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-8);
+}
+
+.note-card {
+  padding: var(--space-12);
+  margin-bottom: var(--space-8);
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-base);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.note-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.note-card.active {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.note-card.archived {
+  opacity: 0.6;
+}
+
+.note-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: var(--space-8);
+}
+
+.note-card-title {
+  font-weight: 500;
+  font-size: var(--font-size-base);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-card.active .note-card-title,
+.note-card.active .note-card-snippet,
+.note-card.active .note-card-date {
+  color: white;
+}
+
+.pin-icon {
+  margin-left: var(--space-8);
+  font-size: var(--font-size-sm);
+  opacity: 0.6;
+}
+
+.pin-icon.pinned {
+  opacity: 1;
+  color: var(--color-warning);
+}
+
+.note-card.active .pin-icon.pinned {
+  color: white;
+}
+
+.note-card-snippet {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: var(--space-4);
+}
+
+.note-card-date {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.new-note-btn {
+  margin: var(--space-16);
+  padding: var(--space-12);
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-base);
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-8);
+}
+
+.new-note-btn:hover {
+  background: var(--color-primary-hover);
+}
+
+.editor-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--color-background);
+}
+
+.editor-header {
+  padding: var(--space-16);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.title-input {
+  width: 100%;
+  padding: var(--space-12);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-base);
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.title-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.editor-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-20);
+}
+
+.editor-textarea {
+  width: 100%;
+  min-height: 500px;
+  border: none;
+  font-size: var(--font-size-base);
+  font-family: var(--font-family-base);
+  line-height: 1.6;
+  resize: none;
+  background: transparent;
+  color: var(--color-text);
+}
+
+.editor-textarea:focus {
+  outline: none;
+}
+
+.editor-footer {
+  padding: var(--space-12) var(--space-20);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--color-text-secondary);
+  text-align: center;
+  padding: var(--space-32);
+}
+
+.empty-state-icon {
+  font-size: 64px;
+  margin-bottom: var(--space-16);
+  opacity: 0.5;
+}
+
+.empty-state h2 {
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--space-8);
+}
+
+.metadata-panel {
+  width: 280px;
+  background: var(--color-surface);
+  border-left: 1px solid var(--color-border);
+  overflow-y: auto;
+  padding: var(--space-20);
+}
+
+.metadata-section {
+  margin-bottom: var(--space-24);
+}
+
+.metadata-section h3 {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  margin-bottom: var(--space-12);
+  color: var(--color-text);
+}
+
+.metadata-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: var(--space-8);
+  font-size: var(--font-size-sm);
+}
+
+.metadata-label {
+  color: var(--color-text-secondary);
+}
+
+.metadata-value {
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.action-btn {
+  width: 100%;
+  padding: var(--space-10);
+  margin-bottom: var(--space-8);
+  border: 1px solid var(--color-border);
+  background: var(--color-background);
+  color: var(--color-text);
+  border-radius: var(--radius-base);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  background: var(--color-secondary);
+  border-color: var(--color-primary);
+}
+
+.action-btn.delete {
+  color: var(--color-error);
+  border-color: var(--color-error);
+}
+
+.action-btn.delete:hover {
+  background: rgba(var(--color-red-500-rgb), 0.1);
+}
+
+.action-btn.pinned {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+
+.tags-input {
+  width: 100%;
+  padding: var(--space-8);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-base);
+  font-size: var(--font-size-sm);
+  background: var(--color-background);
+  color: var(--color-text);
+}
+
+.tags-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-8);
+  margin-top: var(--space-8);
+}
+
+.tag {
+  padding: var(--space-4) var(--space-8);
+  background: var(--color-secondary);
+  color: var(--color-text);
+  border-radius: var(--space-12);
+  font-size: var(--font-size-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.tag-remove {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.tag-remove:hover {
+  color: var(--color-error);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: var(--color-surface);
+  padding: var(--space-24);
+  border-radius: var(--radius-lg);
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.modal h2 {
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--space-12);
+}
+
+.modal p {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-20);
+}
+
+.modal-actions {
+  display: flex;
+  gap: var(--space-12);
+}
+
+.modal-actions .btn {
+  flex: 1;
+}
+
+.btn-secondary {
+  background: var(--color-secondary);
+  color: var(--color-text);
+}
+
+.btn-secondary:hover {
+  background: var(--color-secondary-hover);
+}
+
+.btn-danger {
+  background: var(--color-error);
+  color: white;
+}
+
+.btn-danger:hover {
+  opacity: 0.9;
+}
+
+.toast-container {
+  position: fixed;
+  bottom: var(--space-20);
+  right: var(--space-20);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+
+.toast {
+  background: var(--color-surface);
+  padding: var(--space-16);
+  border-radius: var(--radius-base);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-left: 4px solid var(--color-primary);
+  min-width: 300px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  animation: slideIn 0.3s ease;
+}
+
+.toast.success {
+  border-left-color: var(--color-success);
+}
+
+.toast.error {
+  border-left-color: var(--color-error);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.settings-panel {
+  padding: var(--space-20);
+}
+
+.settings-panel h2 {
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--space-20);
+}
+
+.settings-section {
+  margin-bottom: var(--space-24);
+  padding-bottom: var(--space-24);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.settings-section:last-child {
+  border-bottom: none;
+}
+
+.settings-section h3 {
+  font-size: var(--font-size-lg);
+  margin-bottom: var(--space-12);
+}
+
+.settings-item {
+  margin-bottom: var(--space-16);
+}
+
+.settings-item label {
+  display: block;
+  margin-bottom: var(--space-8);
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-12);
+}
+
+.stat-card {
+  padding: var(--space-16);
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-base);
+  text-align: center;
+}
+
+.stat-value {
+  font-size: var(--font-size-3xl);
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-bottom: var(--space-4);
+}
+
+.stat-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 1024px) {
+  .metadata-panel {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    z-index: 100;
+    transform: translateX(-100%);
+    transition: transform 0.3s;
+  }
+  
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  
+  .editor-panel {
+    width: 100%;
+  }
+}
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+// IndexedDB Manager
+const DB_NAME = 'SecureNotesDB';
+const DB_VERSION = 1;
+const NOTES_STORE = 'notes';
+const SETTINGS_STORE = 'settings';
+
+class DatabaseManager {
+  constructor() {
+    this.db = null;
+  }
+
+  async init() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => {
+        this.db = request.result;
+        resolve();
+      };
+
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+
+        if (!db.objectStoreNames.contains(NOTES_STORE)) {
+          const notesStore = db.createObjectStore(NOTES_STORE, { keyPath: 'id' });
+          notesStore.createIndex('timestamp', 'timestamp', { unique: false });
+        }
+
+        if (!db.objectStoreNames.contains(SETTINGS_STORE)) {
+          db.createObjectStore(SETTINGS_STORE, { keyPath: 'key' });
+        }
+      };
+    });
+  }
+
+  async saveNote(note) {
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([NOTES_STORE], 'readwrite');
+      const store = transaction.objectStore(NOTES_STORE);
+      const request = store.put(note);
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getAllNotes() {
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([NOTES_STORE], 'readonly');
+      const store = transaction.objectStore(NOTES_STORE);
+      const request = store.getAll();
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async deleteNote(id) {
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([NOTES_STORE], 'readwrite');
+      const store = transaction.objectStore(NOTES_STORE);
+      const request = store.delete(id);
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async saveSetting(key, value) {
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([SETTINGS_STORE], 'readwrite');
+      const store = transaction.objectStore(SETTINGS_STORE);
+      const request = store.put({ key, value });
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getSetting(key) {
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([SETTINGS_STORE], 'readonly');
+      const store = transaction.objectStore(SETTINGS_STORE);
+      const request = store.get(key);
+
+      request.onsuccess = () => resolve(request.result?.value);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async clearAllData() {
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction([NOTES_STORE, SETTINGS_STORE], 'readwrite');
+      
+      transaction.objectStore(NOTES_STORE).clear();
+      transaction.objectStore(SETTINGS_STORE).clear();
+
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+}
+
+window.dbManager = new DatabaseManager();
+
+// Encryption Service using CryptoJS
+class CryptoService {
+  constructor() {
+    this.encryptionKey = null;
+    this.masterSalt = null;
+  }
+
+  generateSalt() {
+    return CryptoJS.lib.WordArray.random(16).toString();
+  }
+
+  deriveKey(password, salt) {
+    return CryptoJS.PBKDF2(password, salt, {
+      keySize: 256 / 32,
+      iterations: 10000,
+      hasher: CryptoJS.algo.SHA256
+    }).toString();
+  }
+
+  setKey(key) {
+    this.encryptionKey = key;
+  }
+
+  getPasswordStrength(password) {
+    if (password.length < 6) return 'weak';
+    if (password.length < 10) return 'medium';
+    
+    const hasUpperCase = /[A-Z]/.test(password);
+    const hasLowerCase = /[a-z]/.test(password);
+    const hasNumbers = /\d/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    
+    const strength = [hasUpperCase, hasLowerCase, hasNumbers, hasSpecialChar].filter(Boolean).length;
+    
+    if (strength >= 3 && password.length >= 12) return 'strong';
+    if (strength >= 2 && password.length >= 8) return 'medium';
+    return 'weak';
+  }
+
+  encrypt(noteData) {
+    if (!this.encryptionKey) {
+      throw new Error('Encryption key not set');
+    }
+
+    try {
+      const iv = CryptoJS.lib.WordArray.random(16);
+      const jsonData = JSON.stringify(noteData);
+      
+      const encrypted = CryptoJS.AES.encrypt(jsonData, this.encryptionKey, {
+        iv: iv,
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7
+      });
+
+      return {
+        encryptedData: encrypted.toString(),
+        iv: iv.toString()
+      };
+    } catch (error) {
+      console.error('Encryption error:', error);
+      throw new Error('Failed to encrypt data');
+    }
+  }
+
+  decrypt(encryptedData, iv) {
+    if (!this.encryptionKey) {
+      throw new Error('Encryption key not set');
+    }
+
+    try {
+      const decrypted = CryptoJS.AES.decrypt(encryptedData, this.encryptionKey, {
+        iv: CryptoJS.enc.Hex.parse(iv),
+        mode: CryptoJS.mode.CBC,
+        padding: CryptoJS.pad.Pkcs7
+      });
+
+      const decryptedStr = decrypted.toString(CryptoJS.enc.Utf8);
+      
+      if (!decryptedStr) {
+        throw new Error('Decryption failed - empty result');
+      }
+
+      return JSON.parse(decryptedStr);
+    } catch (error) {
+      console.error('Decryption error:', error);
+      throw new Error('Failed to decrypt data - incorrect password or corrupted data');
+    }
+  }
+
+  exportBackup(notes) {
+    const backup = {
+      version: 1,
+      timestamp: Date.now(),
+      notes: notes,
+      salt: this.masterSalt
+    };
+    return JSON.stringify(backup, null, 2);
+  }
+
+  importBackup(backupJson) {
+    try {
+      const backup = JSON.parse(backupJson);
+      if (!backup.version || !backup.notes) {
+        throw new Error('Invalid backup format');
+      }
+      return backup;
+    } catch (error) {
+      throw new Error('Failed to parse backup file');
+    }
+  }
+}
+
+window.cryptoService = new CryptoService();
+
+// React App
+const { useState, useEffect, useRef } = React;
+
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+function formatDate(timestamp) {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const diff = now - date;
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  
+  if (hours < 1) return 'Just now';
+  if (hours < 24) return `${hours}h ago`;
+  if (hours < 48) return 'Yesterday';
+  return date.toLocaleDateString();
+}
+
+function Toast({ message, type, onClose }) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className={`toast ${type}`}>
+      <span>{type === 'success' ? '✓' : '✕'}</span>
+      <span>{message}</span>
+    </div>
+  );
+}
+
+function ToastContainer({ toasts, removeToast }) {
+  return (
+    <div className="toast-container">
+      {toasts.map((toast) => (
+        <Toast
+          key={toast.id}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => removeToast(toast.id)}
+        />
+      ))}
+    </div>
+  );
+}
+
+function Modal({ title, message, onConfirm, onCancel, confirmText = 'Confirm', cancelText = 'Cancel', danger = false }) {
+  return (
+    <div className="modal-overlay" onClick={onCancel}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <h2>{title}</h2>
+        <p>{message}</p>
+        <div className="modal-actions">
+          <button className="btn btn-secondary" onClick={onCancel}>
+            {cancelText}
+          </button>
+          <button className={`btn ${danger ? 'btn-danger' : 'btn-primary'}`} onClick={onConfirm}>
+            {confirmText}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AuthScreen({ onAuthenticate }) {
+  const [password, setPassword] = useState('');
+  const [isFirstTime, setIsFirstTime] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [passwordStrength, setPasswordStrength] = useState('');
+
+  useEffect(() => {
+    checkFirstTime();
+  }, []);
+
+  async function checkFirstTime() {
+    try {
+      await window.dbManager.init();
+      const salt = await window.dbManager.getSetting('masterSalt');
+      setIsFirstTime(!salt);
+      setLoading(false);
+    } catch (err) {
+      setError('Failed to initialize database');
+      setLoading(false);
+    }
+  }
+
+  function handlePasswordChange(value) {
+    setPassword(value);
+    if (isFirstTime) {
+      setPasswordStrength(window.cryptoService.getPasswordStrength(value));
+    }
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError('');
+
+    if (isFirstTime) {
+      if (password.length < 6) {
+        setError('Password must be at least 6 characters');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError('Passwords do not match');
+        return;
+      }
+
+      try {
+        const salt = window.cryptoService.generateSalt();
+        const derivedKey = window.cryptoService.deriveKey(password, salt);
+        
+        await window.dbManager.saveSetting('masterSalt', salt);
+        window.cryptoService.masterSalt = salt;
+        window.cryptoService.setKey(derivedKey);
+        
+        onAuthenticate();
+      } catch (err) {
+        setError('Failed to set up encryption');
+      }
+    } else {
+      try {
+        const salt = await window.dbManager.getSetting('masterSalt');
+        const derivedKey = window.cryptoService.deriveKey(password, salt);
+        
+        window.cryptoService.masterSalt = salt;
+        window.cryptoService.setKey(derivedKey);
+        
+        const notes = await window.dbManager.getAllNotes();
+        if (notes.length > 0) {
+          try {
+            window.cryptoService.decrypt(notes[0].encryptedData, notes[0].iv);
+          } catch (err) {
+            setError('Incorrect password');
+            return;
+          }
+        }
+        
+        onAuthenticate();
+      } catch (err) {
+        setError('Authentication failed');
+      }
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="auth-screen">
+        <div className="auth-card">
+          <div style={{ textAlign: 'center' }}>
+            <div className="loading-spinner" style={{ margin: '0 auto' }}></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="auth-screen">
+      <div className="auth-card">
+        <h1>🔒 Secure Notes</h1>
+        <p>{isFirstTime ? 'Create your master password' : 'Enter your master password'}</p>
+        
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => handlePasswordChange(e.target.value)}
+              placeholder="Enter password"
+              autoFocus
+            />
+            {isFirstTime && password && (
+              <div className="password-strength">
+                <div className={`password-strength-bar ${passwordStrength}`}></div>
+              </div>
+            )}
+          </div>
+
+          {isFirstTime && (
+            <div className="form-group">
+              <label>Confirm Password</label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm password"
+              />
+            </div>
+          )}
+
+          {error && <div className="error-message">{error}</div>}
+
+          <button type="submit" className="btn btn-primary">
+            {isFirstTime ? 'Create & Continue' : 'Unlock'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [notes, setNotes] = useState([]);
+  const [currentNote, setCurrentNote] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filter, setFilter] = useState('all');
+  const [toasts, setToasts] = useState([]);
+  const [modal, setModal] = useState(null);
+  const [autoSaveTimer, setAutoSaveTimer] = useState(null);
+  const [lastSaved, setLastSaved] = useState(null);
+  const [showSettings, setShowSettings] = useState(false);
+  const lastActivityRef = useRef(Date.now());
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadNotes();
+      setupActivityMonitor();
+      setupKeyboardShortcuts();
+    }
+  }, [isAuthenticated]);
+
+  function setupActivityMonitor() {
+    const checkActivity = () => {
+      const now = Date.now();
+      if (now - lastActivityRef.current > 900000) {
+        handleLock();
+      }
+    };
+
+    const updateActivity = () => {
+      lastActivityRef.current = Date.now();
+    };
+
+    document.addEventListener('mousemove', updateActivity);
+    document.addEventListener('keypress', updateActivity);
+    const interval = setInterval(checkActivity, 60000);
+
+    return () => {
+      document.removeEventListener('mousemove', updateActivity);
+      document.removeEventListener('keypress', updateActivity);
+      clearInterval(interval);
+    };
+  }
+
+  function setupKeyboardShortcuts() {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault();
+        handleNewNote();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        document.querySelector('.search-box input')?.focus();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (currentNote) {
+          saveNote(currentNote);
+        }
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+        e.preventDefault();
+        if (currentNote) {
+          handleTogglePin();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }
+
+  async function loadNotes() {
+    try {
+      const encryptedNotes = await window.dbManager.getAllNotes();
+      const decryptedNotes = [];
+
+      for (const encrypted of encryptedNotes) {
+        try {
+          const decrypted = window.cryptoService.decrypt(encrypted.encryptedData, encrypted.iv);
+          decryptedNotes.push({ ...decrypted, _dbId: encrypted.id });
+        } catch (err) {
+          console.error('Failed to decrypt note:', encrypted.id);
+        }
+      }
+
+      setNotes(decryptedNotes);
+    } catch (err) {
+      showToast('Failed to load notes', 'error');
+    }
+  }
+
+  function handleNewNote() {
+    const newNote = {
+      id: generateUUID(),
+      title: '',
+      content: '',
+      tags: [],
+      isPinned: false,
+      isArchived: false,
+      created: Date.now(),
+      modified: Date.now()
+    };
+    setCurrentNote(newNote);
+  }
+
+  function handleSelectNote(note) {
+    if (autoSaveTimer) {
+      clearTimeout(autoSaveTimer);
+    }
+    setCurrentNote(note);
+  }
+
+  function handleNoteChange(field, value) {
+    if (!currentNote) return;
+
+    const updatedNote = {
+      ...currentNote,
+      [field]: value,
+      modified: Date.now()
+    };
+
+    setCurrentNote(updatedNote);
+
+    if (autoSaveTimer) {
+      clearTimeout(autoSaveTimer);
+    }
+    const timer = setTimeout(() => {
+      saveNote(updatedNote);
+    }, 2000);
+    setAutoSaveTimer(timer);
+  }
+
+  async function saveNote(note) {
+    try {
+      const { encryptedData, iv } = window.cryptoService.encrypt(note);
+      const dbNote = {
+        id: note.id,
+        encryptedData,
+        iv,
+        timestamp: note.modified
+      };
+
+      await window.dbManager.saveNote(dbNote);
+      
+      setNotes(prevNotes => {
+        const index = prevNotes.findIndex(n => n.id === note.id);
+        if (index >= 0) {
+          const updated = [...prevNotes];
+          updated[index] = note;
+          return updated;
+        }
+        return [...prevNotes, note];
+      });
+
+      setLastSaved(Date.now());
+      showToast('Note saved', 'success');
+    } catch (err) {
+      showToast('Failed to save note', 'error');
+    }
+  }
+
+  function handleTogglePin() {
+    if (!currentNote) return;
+    const updated = { ...currentNote, isPinned: !currentNote.isPinned, modified: Date.now() };
+    setCurrentNote(updated);
+    saveNote(updated);
+  }
+
+  function handleToggleArchive() {
+    if (!currentNote) return;
+    const updated = { ...currentNote, isArchived: !currentNote.isArchived, modified: Date.now() };
+    setCurrentNote(updated);
+    saveNote(updated);
+    showToast(updated.isArchived ? 'Note archived' : 'Note unarchived', 'success');
+  }
+
+  function handleDeleteNote() {
+    if (!currentNote) return;
+    setModal({
+      title: 'Delete Note',
+      message: 'Are you sure you want to delete this note? This action cannot be undone.',
+      onConfirm: async () => {
+        try {
+          await window.dbManager.deleteNote(currentNote.id);
+          setNotes(prevNotes => prevNotes.filter(n => n.id !== currentNote.id));
+          setCurrentNote(null);
+          setModal(null);
+          showToast('Note deleted', 'success');
+        } catch (err) {
+          showToast('Failed to delete note', 'error');
+        }
+      },
+      onCancel: () => setModal(null),
+      danger: true
+    });
+  }
+
+  function handleAddTag(tag) {
+    if (!currentNote || !tag.trim()) return;
+    const tags = [...currentNote.tags, tag.trim()];
+    handleNoteChange('tags', tags);
+  }
+
+  function handleRemoveTag(index) {
+    if (!currentNote) return;
+    const tags = currentNote.tags.filter((_, i) => i !== index);
+    handleNoteChange('tags', tags);
+  }
+
+  async function handleExport() {
+    try {
+      const encryptedNotes = await window.dbManager.getAllNotes();
+      const backup = window.cryptoService.exportBackup(encryptedNotes);
+      const blob = new Blob([backup], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `secure-notes-backup-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Backup exported', 'success');
+    } catch (err) {
+      showToast('Failed to export backup', 'error');
+    }
+  }
+
+  function handleLock() {
+    setIsAuthenticated(false);
+    setNotes([]);
+    setCurrentNote(null);
+    window.cryptoService.setKey(null);
+    showToast('App locked', 'success');
+  }
+
+  function showToast(message, type = 'success') {
+    const id = generateUUID();
+    setToasts(prev => [...prev, { id, message, type }]);
+  }
+
+  function removeToast(id) {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }
+
+  const filteredNotes = notes
+    .filter(note => {
+      if (filter === 'pinned') return note.isPinned && !note.isArchived;
+      if (filter === 'archived') return note.isArchived;
+      return !note.isArchived;
+    })
+    .filter(note => {
+      if (!searchQuery) return true;
+      const query = searchQuery.toLowerCase();
+      return note.title.toLowerCase().includes(query) || 
+             note.content.toLowerCase().includes(query);
+    })
+    .sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      return b.modified - a.modified;
+    });
+
+  if (!isAuthenticated) {
+    return <AuthScreen onAuthenticate={() => setIsAuthenticated(true)} />;
+  }
+
+  if (showSettings) {
+    return (
+      <div className="app-container">
+        <div className="settings-panel" style={{ flex: 1, overflowY: 'auto' }}>
+          <button className="btn btn-secondary" onClick={() => setShowSettings(false)} style={{ marginBottom: '20px', width: 'auto' }}>
+            ← Back to Notes
+          </button>
+          
+          <h2>Settings</h2>
+          
+          <div className="settings-section">
+            <h3>Statistics</h3>
+            <div className="stats-grid">
+              <div className="stat-card">
+                <div className="stat-value">{notes.length}</div>
+                <div className="stat-label">Total Notes</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-value">{notes.filter(n => n.isPinned).length}</div>
+                <div className="stat-label">Pinned</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-value">{notes.filter(n => n.isArchived).length}</div>
+                <div className="stat-label">Archived</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-value">{notes.filter(n => !n.isArchived).length}</div>
+                <div className="stat-label">Active</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="settings-section">
+            <h3>Data Management</h3>
+            <button className="btn btn-primary" onClick={handleExport} style={{ marginBottom: '10px' }}>Export Encrypted Backup</button>
+            <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>Download all your notes as an encrypted JSON file</p>
+          </div>
+
+          <div className="settings-section">
+            <h3>Security</h3>
+            <button className="btn btn-secondary" onClick={handleLock}>Lock App</button>
+            <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)', marginTop: '10px' }}>App automatically locks after 15 minutes of inactivity</p>
+          </div>
+
+          <div className="settings-section">
+            <h3>About</h3>
+            <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-text-secondary)' }}>
+              <strong>Secure Notes</strong> - A privacy-focused note-taking app with client-side AES-256 encryption.
+              All your notes are encrypted before being stored locally. Your master password never leaves your device.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="app-container">
+      <div className="sidebar">
+        <div className="sidebar-header">
+          <div className="app-title">
+            🔒 Secure Notes
+            <button className="lock-btn" onClick={handleLock} title="Lock App">🔒</button>
+          </div>
+          
+          <div className="search-box">
+            <input
+              type="text"
+              placeholder="Search notes..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button className="clear-search" onClick={() => setSearchQuery('')}>✕</button>
+            )}
+          </div>
+
+          <div className="filter-buttons">
+            <button
+              className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
+              onClick={() => setFilter('all')}
+            >
+              All
+            </button>
+            <button
+              className={`filter-btn ${filter === 'pinned' ? 'active' : ''}`}
+              onClick={() => setFilter('pinned')}
+            >
+              Pinned
+            </button>
+            <button
+              className={`filter-btn ${filter === 'archived' ? 'active' : ''}`}
+              onClick={() => setFilter('archived')}
+            >
+              Archived
+            </button>
+          </div>
+        </div>
+
+        <div className="notes-list">
+          {filteredNotes.map(note => (
+            <div
+              key={note.id}
+              className={`note-card ${currentNote?.id === note.id ? 'active' : ''} ${note.isArchived ? 'archived' : ''}`}
+              onClick={() => handleSelectNote(note)}
+            >
+              <div className="note-card-header">
+                <div className="note-card-title">
+                  {note.title || 'Untitled Note'}
+                </div>
+                {note.isPinned && <span className="pin-icon pinned">⭐</span>}
+              </div>
+              <div className="note-card-snippet">
+                {note.content.substring(0, 100) || 'No content'}
+              </div>
+              <div className="note-card-date">{formatDate(note.modified)}</div>
+            </div>
+          ))}
+          {filteredNotes.length === 0 && (
+            <div style={{ padding: '20px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+              {searchQuery ? 'No notes found' : 'No notes yet'}
+            </div>
+          )}
+        </div>
+
+        <button className="new-note-btn" onClick={handleNewNote}>
+          <span style={{ fontSize: '20px' }}>+</span> New Note
+        </button>
+      </div>
+
+      <div className="editor-panel">
+        {currentNote ? (
+          <>
+            <div className="editor-header">
+              <input
+                type="text"
+                className="title-input"
+                placeholder="Note title..."
+                value={currentNote.title}
+                onChange={(e) => handleNoteChange('title', e.target.value)}
+              />
+            </div>
+            <div className="editor-container">
+              <textarea
+                className="editor-textarea"
+                placeholder="Start typing your note..."
+                value={currentNote.content}
+                onChange={(e) => handleNoteChange('content', e.target.value)}
+              />
+            </div>
+            <div className="editor-footer">
+              <div>
+                {currentNote.content.length} characters • {currentNote.content.split(/\s+/).filter(Boolean).length} words
+              </div>
+              <div>
+                {lastSaved ? `Saved ${formatDate(lastSaved)}` : 'Not saved'}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="empty-state">
+            <div className="empty-state-icon">📝</div>
+            <h2>No note selected</h2>
+            <p>Select a note from the list or create a new one</p>
+          </div>
+        )}
+      </div>
+
+      <div className="metadata-panel">
+        {currentNote ? (
+          <>
+            <div className="metadata-section">
+              <h3>Metadata</h3>
+              <div className="metadata-item">
+                <span className="metadata-label">Created</span>
+                <span className="metadata-value">{new Date(currentNote.created).toLocaleDateString()}</span>
+              </div>
+              <div className="metadata-item">
+                <span className="metadata-label">Modified</span>
+                <span className="metadata-value">{new Date(currentNote.modified).toLocaleDateString()}</span>
+              </div>
+              <div className="metadata-item">
+                <span className="metadata-label">Words</span>
+                <span className="metadata-value">{currentNote.content.split(/\s+/).filter(Boolean).length}</span>
+              </div>
+            </div>
+
+            <div className="metadata-section">
+              <h3>Actions</h3>
+              <button
+                className={`action-btn ${currentNote.isPinned ? 'pinned' : ''}`}
+                onClick={handleTogglePin}
+              >
+                {currentNote.isPinned ? '⭐ Unpin Note' : '☆ Pin Note'}
+              </button>
+              <button className="action-btn" onClick={handleToggleArchive}>
+                {currentNote.isArchived ? '📤 Unarchive' : '📥 Archive'}
+              </button>
+              <button className="action-btn delete" onClick={handleDeleteNote}>
+                🗑️ Delete Note
+              </button>
+            </div>
+
+            <div className="metadata-section">
+              <h3>Tags</h3>
+              <input
+                type="text"
+                className="tags-input"
+                placeholder="Add tag and press Enter"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handleAddTag(e.target.value);
+                    e.target.value = '';
+                  }
+                }}
+              />
+              <div className="tags-list">
+                {currentNote.tags.map((tag, index) => (
+                  <div key={index} className="tag">
+                    {tag}
+                    <button className="tag-remove" onClick={() => handleRemoveTag(index)}>✕</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="metadata-section">
+              <button className="action-btn" onClick={() => setShowSettings(true)}>
+                ⚙️ Settings
+              </button>
+            </div>
+          </>
+        ) : (
+          <div style={{ padding: '20px', textAlign: 'center', color: 'var(--color-text-secondary)' }}>
+            <p>Select a note to view details</p>
+            <button className="btn btn-primary" onClick={() => setShowSettings(true)} style={{ marginTop: '20px' }}>
+              ⚙️ Settings
+            </button>
+          </div>
+        )}
+      </div>
+
+      {modal && <Modal {...modal} />}
+      <ToastContainer toasts={toasts} removeToast={removeToast} />
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+    </script>
+</body>
+</html>
